@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>SAMP Chatlog Gen v3.2 - 360° Freedom</title>
+    <title>SAMP Chatlog Gen v3.3 - Reorder Edition</title>
     <style>
         body { font-family: 'Segoe UI', Tahoma, sans-serif; background-color: #1e1e2f; color: #fff; margin: 0; padding: 20px; display: flex; gap: 20px; }
         .controls { flex: 1; background: #2a2a40; padding: 20px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.5); overflow-y: auto; max-height: 90vh; }
@@ -51,7 +51,7 @@
         </div>
 
         <div class="group-actions">
-            <button onclick="stackSelected()" style="background: #bd93f9;">رصّ الأسطر</button>
+            <button onclick="stackSelected()" style="background: #bd93f9;">رصّ الأسطر وترتيبها</button>
             <button onclick="resetAllRotation()" style="background: #ffb86c; color:#000;">ضبط ميلان الجميع</button>
             <button onclick="toggleSelectAll()" style="background: #6272a4;">تحديد الكل</button>
         </div>
@@ -93,6 +93,10 @@
             <div style="display: flex; align-items: flex-start; gap: 10px;">
                 <input type="checkbox" class="select-box" checked style="margin-top:10px">
                 <textarea class="line-input" oninput="generateImage()">${text}</textarea>
+                <div style="display:flex; flex-direction:column; gap:2px;">
+                    <button onclick="moveUp(${id})" style="padding:2px; font-size:10px; background:#444">🔼</button>
+                    <button onclick="moveDown(${id})" style="padding:2px; font-size:10px; background:#444">🔽</button>
+                </div>
                 <span class="line-handle" onmousedown="startDrag(event, ${id})">☰</span>
             </div>
             <div class="line-controls">
@@ -100,7 +104,7 @@
                 <div><span class="color-label">خلفية</span><select class="line-bg-type" onchange="generateImage()"><option value="fit">Fit</option><option value="fill">Fill</option><option value="none">None</option></select></div>
                 <div><span class="color-label">لونها</span><input type="color" class="line-bg-color" value="${document.getElementById('globalBgColor').value}" oninput="generateImage()"></div>
                 <div><span class="color-label">حجم الخط</span><input type="range" class="line-size" min="10" max="50" value="${document.getElementById('globalFontSize').value}" oninput="generateImage()"></div>
-                <div><span class="color-label">الإمالة (360°)</span><input type="range" class="line-rotate" min="-180" max="180" value="0" oninput="generateImage()"></div>
+                <div><span class="color-label">الإمالة</span><input type="range" class="line-rotate" min="-180" max="180" value="0" oninput="generateImage()"></div>
                 <div style="display:flex; gap:5px; margin-top:12px">
                     <button onclick="resetRotation(${id})" title="ضبط الميلان" style="background:#6272a4; font-size:10px">↺</button>
                     <div class="bold-btn ${isBold ? 'active' : ''}" onclick="toggleBold(this)">B</div>
@@ -110,6 +114,25 @@
         `;
         linesContainer.appendChild(div);
         generateImage();
+    }
+
+    // --- وظائف الترتيب ---
+    function moveUp(id) {
+        const item = document.getElementById(`line-${id}`);
+        const prev = item.previousElementSibling;
+        if (prev) {
+            linesContainer.insertBefore(item, prev);
+            generateImage();
+        }
+    }
+
+    function moveDown(id) {
+        const item = document.getElementById(`line-${id}`);
+        const next = item.nextElementSibling;
+        if (next) {
+            linesContainer.insertBefore(next, item);
+            generateImage();
+        }
     }
 
     function applyGlobalSize() {
@@ -137,6 +160,7 @@
 
     function toggleBold(btn) { btn.classList.toggle('active'); generateImage(); }
     function removeLine(id) { document.getElementById(`line-${id}`).remove(); generateImage(); }
+    
     function toggleSelectAll() {
         const boxes = document.querySelectorAll('.select-box');
         const anyUnchecked = Array.from(boxes).some(b => !b.checked);
@@ -146,8 +170,10 @@
     function stackSelected() {
         const selectedLines = Array.from(document.querySelectorAll('.line-item')).filter(li => li.querySelector('.select-box').checked);
         if (selectedLines.length < 1) return;
+        
         let currentY = parseInt(selectedLines[0].dataset.y);
         const startX = parseInt(selectedLines[0].dataset.x);
+
         selectedLines.forEach((line) => {
             const fontSize = parseInt(line.querySelector('.line-size').value);
             const linesArray = line.querySelector('.line-input').value.split('\n');
@@ -238,7 +264,7 @@
 
     function downloadImage() {
         const link = document.createElement('a');
-        link.download = 'SAMP_v3.2_360.png';
+        link.download = 'SAMP_v3.3_Reordered.png';
         link.href = canvas.toDataURL('image/png');
         link.click();
     }
@@ -250,11 +276,11 @@
             globalFontSize: document.getElementById('globalFontSize').value,
             globalBgColor: document.getElementById('globalBgColor').value
         };
-        localStorage.setItem('sampSettingsV3_2', JSON.stringify(settings));
+        localStorage.setItem('sampSettingsV3_3', JSON.stringify(settings));
     }
 
     function loadSettings() {
-        const saved = localStorage.getItem('sampSettingsV3_2');
+        const saved = localStorage.getItem('sampSettingsV3_3');
         if (saved) {
             const s = JSON.parse(saved);
             document.getElementById('fontFamily').value = s.fontFamily;
@@ -280,7 +306,7 @@
     window.onload = () => {
         loadSettings();
         addLine("By generousadam!", "#ffffff", false, 80, 80);
-        addLine("* تحياتي.", "#C2A2DA", true, 80, 106);
+        addLine("* تحياتي واشواقي).", "#C2A2DA", true, 80, 106);
         setTimeout(stackSelected, 100);
     };
 </script>
