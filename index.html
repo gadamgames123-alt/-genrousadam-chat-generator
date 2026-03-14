@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>SAMP Chatlog Gen v3.3 - Reorder Edition</title>
+    <title>SAMP Chatlog Gen v4.0 - Smart Selection</title>
     <style>
         body { font-family: 'Segoe UI', Tahoma, sans-serif; background-color: #1e1e2f; color: #fff; margin: 0; padding: 20px; display: flex; gap: 20px; }
         .controls { flex: 1; background: #2a2a40; padding: 20px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.5); overflow-y: auto; max-height: 90vh; }
@@ -13,10 +13,11 @@
         input, select, button, textarea { padding: 8px; border-radius: 5px; border: 1px solid #444; background: #222; color: #fff; }
         button { background: #50fa7b; color: #000; font-weight: bold; cursor: pointer; border: none; transition: 0.2s; padding: 5px 10px; }
         button:hover { opacity: 0.8; }
-        .line-item { background: #1e1e2f; padding: 12px; margin-bottom: 10px; border-radius: 8px; border-right: 4px solid #ffb86c; }
+        .line-item { background: #1e1e2f; padding: 12px; margin-bottom: 10px; border-radius: 8px; border-right: 4px solid #ffb86c; transition: 0.2s; }
+        .line-item.selected-visual { background: #3d3d5c; border-right-color: #50fa7b; }
         .line-controls { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 10px; }
         .line-input { width: 100%; box-sizing: border-box; background: #252535; border: 1px solid #444; color: #fff; resize: vertical; min-height: 40px; }
-        #canvasWrapper { border: 2px dashed #6272a4; background: #000; }
+        #canvasWrapper { border: 2px dashed #6272a4; background: #000; position: relative; cursor: crosshair; }
         canvas { display: block; }
         .bold-btn { width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; font-weight: bold; cursor: pointer; border: 1px solid #444; background: #333; border-radius: 5px; }
         .bold-btn.active { background: #ffb86c; color: #000; }
@@ -47,7 +48,7 @@
             <label>لون الخلفية:</label>
             <input type="color" id="globalBgColor" value="#000000" oninput="applyGlobalBgColor()">
             <label>الشفافية:</label>
-            <input type="range" id="bgOpacity" min="0" max="1" step="0.1" value="0.7" oninput="generateImage(); saveSettings();">
+            <input type="range" id="bgOpacity" min="0" max="1" step="0.1" value="0.7" oninput="applyGlobalOpacity()">
         </div>
 
         <div class="group-actions">
@@ -63,7 +64,7 @@
     </div>
 
     <div class="preview-area">
-        <h2 style="color: #8be9fd;">المعاينة (اسحب ☰ للتحريك)</h2>
+        <h2 style="color: #8be9fd;">المعاينة (اسحب الماوس للتحديد | ☰ للتحريك)</h2>
         <div id="canvasWrapper">
             <canvas id="chatCanvas"></canvas>
         </div>
@@ -81,6 +82,10 @@
     let dragStartX, dragStartY;
     let initialPositions = {};
 
+    let isSelecting = false;
+    let selectStartX, selectStartY;
+    let selectEndX, selectEndY;
+
     function addLine(text = "", color = "#ffffff", isBold = true, x = 60, y = 60) {
         const id = lineCount++;
         const div = document.createElement('div');
@@ -89,9 +94,11 @@
         div.dataset.x = x;
         div.dataset.y = y;
         
+        const currentGlobalOpacity = document.getElementById('bgOpacity').value;
+
         div.innerHTML = `
             <div style="display: flex; align-items: flex-start; gap: 10px;">
-                <input type="checkbox" class="select-box" checked style="margin-top:10px">
+                <input type="checkbox" class="select-box" checked style="margin-top:10px" onchange="updateVisualState(${id})">
                 <textarea class="line-input" oninput="generateImage()">${text}</textarea>
                 <div style="display:flex; flex-direction:column; gap:2px;">
                     <button onclick="moveUp(${id})" style="padding:2px; font-size:10px; background:#444">🔼</button>
@@ -100,11 +107,24 @@
                 <span class="line-handle" onmousedown="startDrag(event, ${id})">☰</span>
             </div>
             <div class="line-controls">
-                <div><span class="color-label">نص</span><select class="line-color" onchange="generateImage()"><option value="#ffffff">أبيض</option><option value="#C2A2DA">بنفسجي</option><option value="#ffff00">أصفر</option></select></div>
+                <div>
+                    <span class="color-label">اختصارات الألوان</span>
+                    <div style="display:flex; gap:3px">
+                        <select class="line-color-preset" onchange="updateLineColorPreset(this, ${id})">
+                            <option value="#ffffff">أبيض</option>
+                            <option value="#C2A2DA">بنفسجي</option>
+                            <option value="#ffff00">أصفر</option>
+                            <option value="#3159ff">اللاسلكي</option>
+                            <option value="custom">مخصص</option>
+                        </select>
+                        <input type="color" class="line-color-picker" value="${color}" oninput="updateLineColorManual(this, ${id})">
+                    </div>
+                </div>
                 <div><span class="color-label">خلفية</span><select class="line-bg-type" onchange="generateImage()"><option value="fit">Fit</option><option value="fill">Fill</option><option value="none">None</option></select></div>
                 <div><span class="color-label">لونها</span><input type="color" class="line-bg-color" value="${document.getElementById('globalBgColor').value}" oninput="generateImage()"></div>
                 <div><span class="color-label">حجم الخط</span><input type="range" class="line-size" min="10" max="50" value="${document.getElementById('globalFontSize').value}" oninput="generateImage()"></div>
                 <div><span class="color-label">الإمالة</span><input type="range" class="line-rotate" min="-180" max="180" value="0" oninput="generateImage()"></div>
+                <div><span class="color-label">شفافية الخلفية</span><input type="range" class="line-opacity" min="0" max="1" step="0.1" value="${currentGlobalOpacity}" oninput="generateImage()"></div>
                 <div style="display:flex; gap:5px; margin-top:12px">
                     <button onclick="resetRotation(${id})" title="ضبط الميلان" style="background:#6272a4; font-size:10px">↺</button>
                     <div class="bold-btn ${isBold ? 'active' : ''}" onclick="toggleBold(this)">B</div>
@@ -113,26 +133,100 @@
             </div>
         `;
         linesContainer.appendChild(div);
+        updateVisualState(id);
         generateImage();
     }
 
-    // --- وظائف الترتيب ---
+    // --- تعديل ميزة Mouse Selection لإلغاء التحديد القديم ---
+    canvas.addEventListener('mousedown', (e) => {
+        const rect = canvas.getBoundingClientRect();
+        isSelecting = true;
+        selectStartX = e.clientX - rect.left;
+        selectStartY = e.clientY - rect.top;
+        selectEndX = selectStartX;
+        selectEndY = selectStartY;
+
+        // إلغاء تحديد جميع الأسطر عند بدء سحب تحديد جديد
+        document.querySelectorAll('.line-item').forEach(line => {
+            const id = line.id.split('-')[1];
+            line.querySelector('.select-box').checked = false;
+            updateVisualState(id);
+        });
+    });
+
+    window.addEventListener('mousemove', (e) => {
+        if (!isSelecting) return;
+        const rect = canvas.getBoundingClientRect();
+        selectEndX = e.clientX - rect.left;
+        selectEndY = e.clientY - rect.top;
+        checkCollision();
+        generateImage();
+    });
+
+    window.addEventListener('mouseup', () => {
+        if (isSelecting) {
+            isSelecting = false;
+            generateImage();
+        }
+    });
+
+    function checkCollision() {
+        const x1 = Math.min(selectStartX, selectEndX);
+        const y1 = Math.min(selectStartY, selectEndY);
+        const x2 = Math.max(selectStartX, selectEndX);
+        const y2 = Math.max(selectStartY, selectEndY);
+
+        document.querySelectorAll('.line-item').forEach(line => {
+            const id = line.id.split('-')[1];
+            const checkbox = line.querySelector('.select-box');
+            const lx = parseInt(line.dataset.x);
+            const ly = parseInt(line.dataset.y);
+            const fontSize = parseInt(line.querySelector('.line-size').value);
+            const text = line.querySelector('.line-input').value;
+            
+            const lw = text.length * (fontSize * 0.55); 
+            const lh = fontSize + 5;
+
+            const isColliding = !(x2 < lx || x1 > lx + lw || y2 < ly || y1 > ly + lh);
+
+            if (isColliding) {
+                checkbox.checked = true;
+                updateVisualState(id);
+            }
+        });
+    }
+
+    function updateVisualState(id) {
+        const line = document.getElementById(`line-${id}`);
+        if(!line) return;
+        if(line.querySelector('.select-box').checked) line.classList.add('selected-visual');
+        else line.classList.remove('selected-visual');
+    }
+
+    function updateLineColorPreset(select, id) {
+        if(select.value !== "custom") {
+            const picker = select.parentElement.querySelector('.line-color-picker');
+            picker.value = select.value;
+        }
+        generateImage();
+    }
+
+    function updateLineColorManual(picker, id) {
+        const select = picker.parentElement.querySelector('.line-color-preset');
+        select.value = "custom";
+        generateImage();
+    }
+
     function moveUp(id) {
         const item = document.getElementById(`line-${id}`);
         const prev = item.previousElementSibling;
-        if (prev) {
-            linesContainer.insertBefore(item, prev);
-            generateImage();
-        }
+        if (prev) { linesContainer.insertBefore(item, prev); generateImage(); }
     }
 
     function moveDown(id) {
         const item = document.getElementById(`line-${id}`);
         const next = item.nextElementSibling;
-        if (next) {
-            linesContainer.insertBefore(next, item);
-            generateImage();
-        }
+        if (next) { linesContainer.insertBefore(next, item); generateImage(); }
     }
 
     function applyGlobalSize() {
@@ -144,6 +238,12 @@
     function applyGlobalBgColor() {
         const color = document.getElementById('globalBgColor').value;
         document.querySelectorAll('.line-bg-color').forEach(input => input.value = color);
+        generateImage();
+    }
+
+    function applyGlobalOpacity() {
+        const opacity = document.getElementById('bgOpacity').value;
+        document.querySelectorAll('.line-opacity').forEach(input => input.value = opacity);
         generateImage();
     }
 
@@ -164,16 +264,17 @@
     function toggleSelectAll() {
         const boxes = document.querySelectorAll('.select-box');
         const anyUnchecked = Array.from(boxes).some(b => !b.checked);
-        boxes.forEach(b => b.checked = anyUnchecked);
+        boxes.forEach(b => {
+            b.checked = anyUnchecked;
+            updateVisualState(b.closest('.line-item').id.split('-')[1]);
+        });
     }
 
     function stackSelected() {
         const selectedLines = Array.from(document.querySelectorAll('.line-item')).filter(li => li.querySelector('.select-box').checked);
         if (selectedLines.length < 1) return;
-        
         let currentY = parseInt(selectedLines[0].dataset.y);
         const startX = parseInt(selectedLines[0].dataset.x);
-
         selectedLines.forEach((line) => {
             const fontSize = parseInt(line.querySelector('.line-size').value);
             const linesArray = line.querySelector('.line-input').value.split('\n');
@@ -217,7 +318,6 @@
 
     function generateImage() {
         const fontFam = document.getElementById('fontFamily').value;
-        const globalOpacity = parseFloat(document.getElementById('bgOpacity').value);
         if (bgImage) {
             canvas.width = bgImage.width; canvas.height = bgImage.height;
             ctx.drawImage(bgImage, 0, 0);
@@ -232,9 +332,10 @@
             if (!text) return;
             const fontSize = parseInt(line.querySelector('.line-size').value);
             const rotation = parseInt(line.querySelector('.line-rotate').value);
-            const color = line.querySelector('.line-color').value;
+            const color = line.querySelector('.line-color-picker').value;
             const bgType = line.querySelector('.line-bg-type').value;
             const bgColorHex = line.querySelector('.line-bg-color').value;
+            const lineOpacity = parseFloat(line.querySelector('.line-opacity').value);
             const isBold = line.querySelector('.bold-btn').classList.contains('active');
             const x = parseInt(line.dataset.x);
             const y = parseInt(line.dataset.y);
@@ -251,20 +352,29 @@
                 const textWidth = ctx.measureText(txtLine).width;
                 const ly = index * singleLineH;
                 if (bgType !== "none") {
-                    ctx.fillStyle = hexToRgba(bgColorHex, globalOpacity);
+                    ctx.fillStyle = hexToRgba(bgColorHex, lineOpacity);
                     if (bgType === "fit") ctx.fillRect(-4, ly - 4, textWidth + 8, singleLineH);
                     else if (bgType === "fill") ctx.fillRect(-x, ly - 4, canvas.width, singleLineH);
                 }
-                ctx.strokeStyle = "black"; ctx.lineWidth = 2; ctx.strokeText(txtLine, 0, ly);
+                ctx.strokeStyle = "black"; ctx.lineWidth = 2.5; ctx.strokeText(txtLine, 0, ly);
                 ctx.fillStyle = color; ctx.fillText(txtLine, 0, ly);
             });
             ctx.restore();
         });
+
+        if (isSelecting) {
+            ctx.strokeStyle = "#50fa7b";
+            ctx.setLineDash([5, 5]);
+            ctx.strokeRect(selectStartX, selectStartY, selectEndX - selectStartX, selectEndY - selectStartY);
+            ctx.fillStyle = "rgba(80, 250, 123, 0.15)";
+            ctx.fillRect(selectStartX, selectStartY, selectEndX - selectStartX, selectEndY - selectStartY);
+            ctx.setLineDash([]);
+        }
     }
 
     function downloadImage() {
         const link = document.createElement('a');
-        link.download = 'SAMP_v3.3_Reordered.png';
+        link.download = 'SAMP_v4.0_Chatlog.png';
         link.href = canvas.toDataURL('image/png');
         link.click();
     }
@@ -276,11 +386,11 @@
             globalFontSize: document.getElementById('globalFontSize').value,
             globalBgColor: document.getElementById('globalBgColor').value
         };
-        localStorage.setItem('sampSettingsV3_3', JSON.stringify(settings));
+        localStorage.setItem('sampSettingsV3_5', JSON.stringify(settings));
     }
 
     function loadSettings() {
-        const saved = localStorage.getItem('sampSettingsV3_3');
+        const saved = localStorage.getItem('sampSettingsV3_5');
         if (saved) {
             const s = JSON.parse(saved);
             document.getElementById('fontFamily').value = s.fontFamily;
@@ -305,8 +415,8 @@
 
     window.onload = () => {
         loadSettings();
-        addLine("By generousadam!", "#ffffff", false, 80, 80);
-        addLine("* تحياتي واشواقي).", "#C2A2DA", true, 80, 106);
+        addLine("by genrousadam. (gadam1.)", "#ffffff", false, 80, 80);
+        addLine("* تحياتي.", "#3159ff", true, 80, 106);
         setTimeout(stackSelected, 100);
     };
 </script>
