@@ -2,7 +2,8 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>SAMP Chatlog Gen v4.0 - Smart Selection</title>
+    <title>SAMP Chatlog Gen v4.1 - Smart Selection & Fonts</title>
+    <link href="https://fonts.googleapis.com/css2?family=Almarai&family=Cairo&family=Cinzel&family=Creepster&family=Montserrat&family=Oswald&family=Roboto&family=Tajawal&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Segoe UI', Tahoma, sans-serif; background-color: #1e1e2f; color: #fff; margin: 0; padding: 20px; display: flex; gap: 20px; }
         .controls { flex: 1; background: #2a2a40; padding: 20px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.5); overflow-y: auto; max-height: 90vh; }
@@ -15,7 +16,8 @@
         button:hover { opacity: 0.8; }
         .line-item { background: #1e1e2f; padding: 12px; margin-bottom: 10px; border-radius: 8px; border-right: 4px solid #ffb86c; transition: 0.2s; }
         .line-item.selected-visual { background: #3d3d5c; border-right-color: #50fa7b; }
-        .line-controls { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 10px; }
+        /* تم تعديل الشبكة لتصبح 4 أعمدة لتستوعب خيار الخط بشكل أنيق */
+        .line-controls { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 10px; }
         .line-input { width: 100%; box-sizing: border-box; background: #252535; border: 1px solid #444; color: #fff; resize: vertical; min-height: 40px; }
         #canvasWrapper { border: 2px dashed #6272a4; background: #000; position: relative; cursor: crosshair; }
         canvas { display: block; }
@@ -24,9 +26,17 @@
         .line-handle { cursor: move; color: #ffb86c; font-weight: bold; padding: 5px; background: #333; border-radius: 3px; }
         .group-actions { margin-bottom: 15px; background: #383850; padding: 10px; border-radius: 8px; display: flex; flex-wrap: wrap; gap: 8px; }
         .color-label { font-size: 10px; display: block; margin-bottom: 2px; color: #aaa; }
+        .font-select { width: 100%; }
     </style>
 </head>
 <body>
+
+    <div style="position:absolute; opacity:0; pointer-events:none;">
+        <span style="font-family: 'Roboto'">.</span><span style="font-family: 'Oswald'">.</span>
+        <span style="font-family: 'Montserrat'">.</span><span style="font-family: 'Cairo'">.</span>
+        <span style="font-family: 'Tajawal'">.</span><span style="font-family: 'Almarai'">.</span>
+        <span style="font-family: 'Cinzel'">.</span><span style="font-family: 'Creepster'">.</span>
+    </div>
 
     <div class="controls">
         <h2>الإعدادات العامة</h2>
@@ -38,10 +48,24 @@
             <label>الخط العام:</label>
             <input type="number" id="globalFontSize" value="18" style="width: 50px;" oninput="applyGlobalSize()">
             <label>نوعه:</label>
-            <select id="fontFamily" onchange="generateImage(); saveSettings();">
+            <select id="fontFamily" onchange="applyGlobalFont(); saveSettings();">
                 <option value="Tahoma">Tahoma</option>
                 <option value="Arial">Arial</option>
                 <option value="Courier New">Courier New</option>
+                <option value="Verdana">Verdana</option>
+                <option value="Trebuchet MS">Trebuchet MS</option>
+                <option value="Georgia">Georgia</option>
+                <option value="Impact">Impact</option>
+                <option value="'Comic Sans MS'">Comic Sans</option>
+                <option value="'Times New Roman'">Times New Roman</option>
+                <option value="'Roboto', sans-serif">Roboto</option>
+                <option value="'Oswald', sans-serif">Oswald</option>
+                <option value="'Montserrat', sans-serif">Montserrat</option>
+                <option value="'Cairo', sans-serif">Cairo (عربي)</option>
+                <option value="'Tajawal', sans-serif">Tajawal (عربي)</option>
+                <option value="'Almarai', sans-serif">Almarai (عربي)</option>
+                <option value="'Cinzel', serif">Cinzel</option>
+                <option value="'Creepster', cursive" style="color:#ff5555; font-weight:bold;">Creepster (رعب ودماء)</option>
             </select>
         </div>
         <div class="setting-group">
@@ -52,7 +76,8 @@
         </div>
 
         <div class="group-actions">
-            <button onclick="stackSelected()" style="background: #bd93f9;">رصّ الأسطر وترتيبها</button>
+            <button onclick="stackSelected()" style="background: #bd93f9;">رصّ الأسطر عمودياً</button>
+            <button onclick="alignLeftSelected()" style="background: #8be9fd; color:#000;">محاذاة لليسار</button>
             <button onclick="resetAllRotation()" style="background: #ffb86c; color:#000;">ضبط ميلان الجميع</button>
             <button onclick="toggleSelectAll()" style="background: #6272a4;">تحديد الكل</button>
         </div>
@@ -108,23 +133,45 @@
             </div>
             <div class="line-controls">
                 <div>
+                    <span class="color-label">الخط الخاص بالسطر</span>
+                    <select class="line-font font-select" onchange="generateImage()">
+                        <option value="Tahoma">Tahoma</option>
+                        <option value="Arial">Arial</option>
+                        <option value="Courier New">Courier New</option>
+                        <option value="Verdana">Verdana</option>
+                        <option value="Trebuchet MS">Trebuchet MS</option>
+                        <option value="Georgia">Georgia</option>
+                        <option value="Impact">Impact</option>
+                        <option value="'Comic Sans MS'">Comic Sans</option>
+                        <option value="'Times New Roman'">Times New Roman</option>
+                        <option value="'Roboto', sans-serif">Roboto</option>
+                        <option value="'Oswald', sans-serif">Oswald</option>
+                        <option value="'Montserrat', sans-serif">Montserrat</option>
+                        <option value="'Cairo', sans-serif">Cairo</option>
+                        <option value="'Tajawal', sans-serif">Tajawal</option>
+                        <option value="'Almarai', sans-serif">Almarai</option>
+                        <option value="'Cinzel', serif">Cinzel</option>
+                        <option value="'Creepster', cursive">Creepster (رعب)</option>
+                    </select>
+                </div>
+                <div>
                     <span class="color-label">اختصارات الألوان</span>
                     <div style="display:flex; gap:3px">
-                        <select class="line-color-preset" onchange="updateLineColorPreset(this, ${id})">
+                        <select class="line-color-preset" onchange="updateLineColorPreset(this, ${id})" style="width: 70%;">
                             <option value="#ffffff">أبيض</option>
                             <option value="#C2A2DA">بنفسجي</option>
                             <option value="#ffff00">أصفر</option>
                             <option value="#3159ff">اللاسلكي</option>
                             <option value="custom">مخصص</option>
                         </select>
-                        <input type="color" class="line-color-picker" value="${color}" oninput="updateLineColorManual(this, ${id})">
+                        <input type="color" class="line-color-picker" value="${color}" style="width: 30%; padding:0;" oninput="updateLineColorManual(this, ${id})">
                     </div>
                 </div>
-                <div><span class="color-label">خلفية</span><select class="line-bg-type" onchange="generateImage()"><option value="fit">Fit</option><option value="fill">Fill</option><option value="none">None</option></select></div>
-                <div><span class="color-label">لونها</span><input type="color" class="line-bg-color" value="${document.getElementById('globalBgColor').value}" oninput="generateImage()"></div>
-                <div><span class="color-label">حجم الخط</span><input type="range" class="line-size" min="10" max="50" value="${document.getElementById('globalFontSize').value}" oninput="generateImage()"></div>
-                <div><span class="color-label">الإمالة</span><input type="range" class="line-rotate" min="-180" max="180" value="0" oninput="generateImage()"></div>
-                <div><span class="color-label">شفافية الخلفية</span><input type="range" class="line-opacity" min="0" max="1" step="0.1" value="${currentGlobalOpacity}" oninput="generateImage()"></div>
+                <div><span class="color-label">خلفية</span><select class="line-bg-type" onchange="generateImage()" style="width:100%;"><option value="fit">Fit</option><option value="fill">Fill</option><option value="none">None</option></select></div>
+                <div><span class="color-label">لونها</span><input type="color" class="line-bg-color" value="${document.getElementById('globalBgColor').value}" oninput="generateImage()" style="width:100%;"></div>
+                <div><span class="color-label">حجم الخط</span><input type="range" class="line-size" min="10" max="50" value="${document.getElementById('globalFontSize').value}" oninput="generateImage()" style="width:100%;"></div>
+                <div><span class="color-label">الإمالة</span><input type="range" class="line-rotate" min="-180" max="180" value="0" oninput="generateImage()" style="width:100%;"></div>
+                <div><span class="color-label">شفافية الخلفية</span><input type="range" class="line-opacity" min="0" max="1" step="0.1" value="${currentGlobalOpacity}" oninput="generateImage()" style="width:100%;"></div>
                 <div style="display:flex; gap:5px; margin-top:12px">
                     <button onclick="resetRotation(${id})" title="ضبط الميلان" style="background:#6272a4; font-size:10px">↺</button>
                     <div class="bold-btn ${isBold ? 'active' : ''}" onclick="toggleBold(this)">B</div>
@@ -133,11 +180,14 @@
             </div>
         `;
         linesContainer.appendChild(div);
+        
+        // تعيين الخط الافتراضي للسطر ليكون نفس الخط العام المحدد وقت الإنشاء
+        div.querySelector('.line-font').value = document.getElementById('fontFamily').value;
+
         updateVisualState(id);
         generateImage();
     }
 
-    // --- تعديل ميزة Mouse Selection لإلغاء التحديد القديم ---
     canvas.addEventListener('mousedown', (e) => {
         const rect = canvas.getBoundingClientRect();
         isSelecting = true;
@@ -146,7 +196,6 @@
         selectEndX = selectStartX;
         selectEndY = selectStartY;
 
-        // إلغاء تحديد جميع الأسطر عند بدء سحب تحديد جديد
         document.querySelectorAll('.line-item').forEach(line => {
             const id = line.id.split('-')[1];
             line.querySelector('.select-box').checked = false;
@@ -235,6 +284,13 @@
         generateImage();
     }
 
+    function applyGlobalFont() {
+        const font = document.getElementById('fontFamily').value;
+        // تغيير خط جميع الأسطر الموجودة لتطابق الخط العام عند اختياره
+        document.querySelectorAll('.line-font').forEach(select => select.value = font);
+        generateImage();
+    }
+
     function applyGlobalBgColor() {
         const color = document.getElementById('globalBgColor').value;
         document.querySelectorAll('.line-bg-color').forEach(input => input.value = color);
@@ -285,6 +341,19 @@
         generateImage();
     }
 
+    // الدالة الجديدة لمحاذاة الأسطر المحددة نحو اليسار
+    function alignLeftSelected() {
+        const selectedLines = Array.from(document.querySelectorAll('.line-item')).filter(li => li.querySelector('.select-box').checked);
+        if (selectedLines.length < 1) return;
+        
+        // أخذ إحداثيات X لأول سطر محدد وجعل جميع الأسطر الأخرى تلتصق به من اليسار
+        const startX = parseInt(selectedLines[0].dataset.x);
+        selectedLines.forEach((line) => {
+            line.dataset.x = startX;
+        });
+        generateImage();
+    }
+
     function startDrag(e, id) {
         e.preventDefault();
         draggingLineId = id; dragStartX = e.clientX; dragStartY = e.clientY;
@@ -317,7 +386,6 @@
     }
 
     function generateImage() {
-        const fontFam = document.getElementById('fontFamily').value;
         if (bgImage) {
             canvas.width = bgImage.width; canvas.height = bgImage.height;
             ctx.drawImage(bgImage, 0, 0);
@@ -330,6 +398,10 @@
         document.querySelectorAll('.line-item').forEach(line => {
             const text = line.querySelector('.line-input').value;
             if (!text) return;
+            
+            // سحب نوع الخط الخاص بالسطر نفسه
+            const fontFam = line.querySelector('.line-font').value;
+            
             const fontSize = parseInt(line.querySelector('.line-size').value);
             const rotation = parseInt(line.querySelector('.line-rotate').value);
             const color = line.querySelector('.line-color-picker').value;
@@ -374,7 +446,7 @@
 
     function downloadImage() {
         const link = document.createElement('a');
-        link.download = 'SAMP_v4.0_Chatlog.png';
+        link.download = 'SAMP_v4.1_Chatlog.png';
         link.href = canvas.toDataURL('image/png');
         link.click();
     }
@@ -386,14 +458,14 @@
             globalFontSize: document.getElementById('globalFontSize').value,
             globalBgColor: document.getElementById('globalBgColor').value
         };
-        localStorage.setItem('sampSettingsV3_5', JSON.stringify(settings));
+        localStorage.setItem('sampSettingsV4_1', JSON.stringify(settings));
     }
 
     function loadSettings() {
-        const saved = localStorage.getItem('sampSettingsV3_5');
+        const saved = localStorage.getItem('sampSettingsV4_1');
         if (saved) {
             const s = JSON.parse(saved);
-            document.getElementById('fontFamily').value = s.fontFamily;
+            document.getElementById('fontFamily').value = s.fontFamily || 'Tahoma';
             document.getElementById('bgOpacity').value = s.bgOpacity;
             document.getElementById('globalFontSize').value = s.globalFontSize || 18;
             document.getElementById('globalBgColor').value = s.globalBgColor || "#000000";
@@ -418,6 +490,8 @@
         addLine("by genrousadam. (gadam1.)", "#ffffff", false, 80, 80);
         addLine("* تحياتي.", "#3159ff", true, 80, 106);
         setTimeout(stackSelected, 100);
+        // توليد الصورة مرة إضافية لضمان تحميل الخطوط
+        setTimeout(generateImage, 500);
     };
 </script>
 </body>
