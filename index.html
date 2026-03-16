@@ -16,7 +16,6 @@
         button:hover { opacity: 0.8; }
         .line-item { background: #1e1e2f; padding: 12px; margin-bottom: 10px; border-radius: 8px; border-right: 4px solid #ffb86c; transition: 0.2s; }
         .line-item.selected-visual { background: #3d3d5c; border-right-color: #50fa7b; }
-        /* تم تعديل الشبكة لتصبح 4 أعمدة لتستوعب خيار الخط بشكل أنيق */
         .line-controls { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 10px; }
         .line-input { width: 100%; box-sizing: border-box; background: #252535; border: 1px solid #444; color: #fff; resize: vertical; min-height: 40px; }
         #canvasWrapper { border: 2px dashed #6272a4; background: #000; position: relative; cursor: crosshair; }
@@ -44,6 +43,13 @@
             <label>صورة اللعبة:</label>
             <input type="file" id="bgImageInput" accept="image/*">
         </div>
+        
+        <div class="setting-group" style="background: #44475a;">
+            <label>ظل النص (Shadow):</label>
+            <input type="checkbox" id="globalShadowToggle" checked onchange="generateImage()" style="width: 20px; height: 20px;">
+            <span style="font-size: 0.8rem;">تفعيل الظل لجميع الأسطر</span>
+        </div>
+
         <div class="setting-group">
             <label>الخط العام:</label>
             <input type="number" id="globalFontSize" value="18" style="width: 50px;" oninput="applyGlobalSize()">
@@ -180,26 +186,21 @@
             </div>
         `;
         linesContainer.appendChild(div);
-        
-        // تعيين الخط الافتراضي للسطر ليكون نفس الخط العام المحدد وقت الإنشاء
         div.querySelector('.line-font').value = document.getElementById('fontFamily').value;
-
         updateVisualState(id);
         generateImage();
     }
 
+    // --- أنظمة التحديد والسحب الأصلية ---
     canvas.addEventListener('mousedown', (e) => {
         const rect = canvas.getBoundingClientRect();
         isSelecting = true;
         selectStartX = e.clientX - rect.left;
         selectStartY = e.clientY - rect.top;
-        selectEndX = selectStartX;
-        selectEndY = selectStartY;
-
+        selectEndX = selectStartX; selectEndY = selectStartY;
         document.querySelectorAll('.line-item').forEach(line => {
-            const id = line.id.split('-')[1];
             line.querySelector('.select-box').checked = false;
-            updateVisualState(id);
+            updateVisualState(line.id.split('-')[1]);
         });
     });
 
@@ -212,177 +213,21 @@
         generateImage();
     });
 
-    window.addEventListener('mouseup', () => {
-        if (isSelecting) {
-            isSelecting = false;
-            generateImage();
-        }
-    });
+    window.addEventListener('mouseup', () => { if (isSelecting) { isSelecting = false; generateImage(); } });
 
     function checkCollision() {
-        const x1 = Math.min(selectStartX, selectEndX);
-        const y1 = Math.min(selectStartY, selectEndY);
-        const x2 = Math.max(selectStartX, selectEndX);
-        const y2 = Math.max(selectStartY, selectEndY);
-
+        const x1 = Math.min(selectStartX, selectEndX), y1 = Math.min(selectStartY, selectEndY);
+        const x2 = Math.max(selectStartX, selectEndX), y2 = Math.max(selectStartY, selectEndY);
         document.querySelectorAll('.line-item').forEach(line => {
-            const id = line.id.split('-')[1];
-            const checkbox = line.querySelector('.select-box');
-            const lx = parseInt(line.dataset.x);
-            const ly = parseInt(line.dataset.y);
+            const lx = parseInt(line.dataset.x), ly = parseInt(line.dataset.y);
             const fontSize = parseInt(line.querySelector('.line-size').value);
             const text = line.querySelector('.line-input').value;
-            
-            const lw = text.length * (fontSize * 0.55); 
-            const lh = fontSize + 5;
-
-            const isColliding = !(x2 < lx || x1 > lx + lw || y2 < ly || y1 > ly + lh);
-
-            if (isColliding) {
-                checkbox.checked = true;
-                updateVisualState(id);
+            const lw = text.length * (fontSize * 0.55), lh = fontSize + 5;
+            if (!(x2 < lx || x1 > lx + lw || y2 < ly || y1 > ly + lh)) {
+                line.querySelector('.select-box').checked = true;
+                updateVisualState(line.id.split('-')[1]);
             }
         });
-    }
-
-    function updateVisualState(id) {
-        const line = document.getElementById(`line-${id}`);
-        if(!line) return;
-        if(line.querySelector('.select-box').checked) line.classList.add('selected-visual');
-        else line.classList.remove('selected-visual');
-    }
-
-    function updateLineColorPreset(select, id) {
-        if(select.value !== "custom") {
-            const picker = select.parentElement.querySelector('.line-color-picker');
-            picker.value = select.value;
-        }
-        generateImage();
-    }
-
-    function updateLineColorManual(picker, id) {
-        const select = picker.parentElement.querySelector('.line-color-preset');
-        select.value = "custom";
-        generateImage();
-    }
-
-    function moveUp(id) {
-        const item = document.getElementById(`line-${id}`);
-        const prev = item.previousElementSibling;
-        if (prev) { linesContainer.insertBefore(item, prev); generateImage(); }
-    }
-
-    function moveDown(id) {
-        const item = document.getElementById(`line-${id}`);
-        const next = item.nextElementSibling;
-        if (next) { linesContainer.insertBefore(next, item); generateImage(); }
-    }
-
-    function applyGlobalSize() {
-        const size = document.getElementById('globalFontSize').value;
-        document.querySelectorAll('.line-size').forEach(input => input.value = size);
-        generateImage();
-    }
-
-    function applyGlobalFont() {
-        const font = document.getElementById('fontFamily').value;
-        // تغيير خط جميع الأسطر الموجودة لتطابق الخط العام عند اختياره
-        document.querySelectorAll('.line-font').forEach(select => select.value = font);
-        generateImage();
-    }
-
-    function applyGlobalBgColor() {
-        const color = document.getElementById('globalBgColor').value;
-        document.querySelectorAll('.line-bg-color').forEach(input => input.value = color);
-        generateImage();
-    }
-
-    function applyGlobalOpacity() {
-        const opacity = document.getElementById('bgOpacity').value;
-        document.querySelectorAll('.line-opacity').forEach(input => input.value = opacity);
-        generateImage();
-    }
-
-    function resetRotation(id) {
-        const line = document.getElementById(`line-${id}`);
-        line.querySelector('.line-rotate').value = 0;
-        generateImage();
-    }
-
-    function resetAllRotation() {
-        document.querySelectorAll('.line-rotate').forEach(input => input.value = 0);
-        generateImage();
-    }
-
-    function toggleBold(btn) { btn.classList.toggle('active'); generateImage(); }
-    function removeLine(id) { document.getElementById(`line-${id}`).remove(); generateImage(); }
-    
-    function toggleSelectAll() {
-        const boxes = document.querySelectorAll('.select-box');
-        const anyUnchecked = Array.from(boxes).some(b => !b.checked);
-        boxes.forEach(b => {
-            b.checked = anyUnchecked;
-            updateVisualState(b.closest('.line-item').id.split('-')[1]);
-        });
-    }
-
-    function stackSelected() {
-        const selectedLines = Array.from(document.querySelectorAll('.line-item')).filter(li => li.querySelector('.select-box').checked);
-        if (selectedLines.length < 1) return;
-        let currentY = parseInt(selectedLines[0].dataset.y);
-        const startX = parseInt(selectedLines[0].dataset.x);
-        selectedLines.forEach((line) => {
-            const fontSize = parseInt(line.querySelector('.line-size').value);
-            const linesArray = line.querySelector('.line-input').value.split('\n');
-            line.dataset.x = startX;
-            line.dataset.y = currentY;
-            currentY += ((fontSize + 8) * linesArray.length) - 1;
-        });
-        generateImage();
-    }
-
-    // الدالة الجديدة لمحاذاة الأسطر المحددة نحو اليسار
-    function alignLeftSelected() {
-        const selectedLines = Array.from(document.querySelectorAll('.line-item')).filter(li => li.querySelector('.select-box').checked);
-        if (selectedLines.length < 1) return;
-        
-        // أخذ إحداثيات X لأول سطر محدد وجعل جميع الأسطر الأخرى تلتصق به من اليسار
-        const startX = parseInt(selectedLines[0].dataset.x);
-        selectedLines.forEach((line) => {
-            line.dataset.x = startX;
-        });
-        generateImage();
-    }
-
-    function startDrag(e, id) {
-        e.preventDefault();
-        draggingLineId = id; dragStartX = e.clientX; dragStartY = e.clientY;
-        initialPositions = {};
-        document.querySelectorAll('.line-item').forEach(li => {
-            if (li.querySelector('.select-box').checked) {
-                initialPositions[li.id] = { x: parseInt(li.dataset.x), y: parseInt(li.dataset.y) };
-            }
-        });
-        document.addEventListener('mousemove', onDragMove);
-        document.addEventListener('mouseup', onDragEnd);
-    }
-
-    function onDragMove(e) {
-        if (draggingLineId === null) return;
-        const dx = e.clientX - dragStartX; const dy = e.clientY - dragStartY;
-        for (let id in initialPositions) {
-            const line = document.getElementById(id);
-            line.dataset.x = initialPositions[id].x + dx;
-            line.dataset.y = initialPositions[id].y + dy;
-        }
-        generateImage();
-    }
-
-    function onDragEnd() { draggingLineId = null; document.removeEventListener('mousemove', onDragMove); document.removeEventListener('mouseup', onDragEnd); saveSettings(); }
-
-    function hexToRgba(hex, opacity) {
-        let r = parseInt(hex.slice(1, 3), 16), g = parseInt(hex.slice(3, 5), 16), b = parseInt(hex.slice(5, 7), 16);
-        return `rgba(${r}, ${g}, ${b}, ${opacity})`;
     }
 
     function generateImage() {
@@ -395,13 +240,12 @@
         }
         ctx.direction = "ltr"; ctx.textAlign = "left"; ctx.textBaseline = "top";
 
+        const globalShadow = document.getElementById('globalShadowToggle').checked;
+
         document.querySelectorAll('.line-item').forEach(line => {
             const text = line.querySelector('.line-input').value;
             if (!text) return;
-            
-            // سحب نوع الخط الخاص بالسطر نفسه
             const fontFam = line.querySelector('.line-font').value;
-            
             const fontSize = parseInt(line.querySelector('.line-size').value);
             const rotation = parseInt(line.querySelector('.line-rotate').value);
             const color = line.querySelector('.line-color-picker').value;
@@ -409,8 +253,7 @@
             const bgColorHex = line.querySelector('.line-bg-color').value;
             const lineOpacity = parseFloat(line.querySelector('.line-opacity').value);
             const isBold = line.querySelector('.bold-btn').classList.contains('active');
-            const x = parseInt(line.dataset.x);
-            const y = parseInt(line.dataset.y);
+            const x = parseInt(line.dataset.x), y = parseInt(line.dataset.y);
 
             const linesArray = text.split('\n');
             const singleLineH = fontSize + 8;
@@ -423,11 +266,29 @@
             linesArray.forEach((txtLine, index) => {
                 const textWidth = ctx.measureText(txtLine).width;
                 const ly = index * singleLineH;
+
+                // 1. رسم الخلفية (مع تعطيل الظل لمنع تضارب الصناديق)
                 if (bgType !== "none") {
+                    ctx.save();
+                    ctx.shadowColor = "transparent"; // تعطيل الظل للخلفية
+                    ctx.shadowBlur = 0;
                     ctx.fillStyle = hexToRgba(bgColorHex, lineOpacity);
                     if (bgType === "fit") ctx.fillRect(-4, ly - 4, textWidth + 8, singleLineH);
                     else if (bgType === "fill") ctx.fillRect(-x, ly - 4, canvas.width, singleLineH);
+                    ctx.restore();
                 }
+
+                // 2. إعداد الظل للنص فقط إذا كان الخيار العام مفعلاً
+                if (globalShadow) {
+                    ctx.shadowColor = "rgba(0,0,0,1)";
+                    ctx.shadowBlur = 2;
+                    ctx.shadowOffsetX = 1.5;
+                    ctx.shadowOffsetY = 1.5;
+                } else {
+                    ctx.shadowColor = "transparent";
+                }
+
+                // 3. رسم النص
                 ctx.strokeStyle = "black"; ctx.lineWidth = 2.5; ctx.strokeText(txtLine, 0, ly);
                 ctx.fillStyle = color; ctx.fillText(txtLine, 0, ly);
             });
@@ -435,62 +296,101 @@
         });
 
         if (isSelecting) {
-            ctx.strokeStyle = "#50fa7b";
-            ctx.setLineDash([5, 5]);
+            ctx.save();
+            ctx.shadowColor = "transparent";
+            ctx.strokeStyle = "#50fa7b"; ctx.setLineDash([5, 5]);
             ctx.strokeRect(selectStartX, selectStartY, selectEndX - selectStartX, selectEndY - selectStartY);
-            ctx.fillStyle = "rgba(80, 250, 123, 0.15)";
-            ctx.fillRect(selectStartX, selectStartY, selectEndX - selectStartX, selectEndY - selectStartY);
-            ctx.setLineDash([]);
+            ctx.restore();
         }
+    }
+
+    // --- الوظائف المساعدة ---
+    function hexToRgba(hex, opacity) {
+        let r = parseInt(hex.slice(1, 3), 16), g = parseInt(hex.slice(3, 5), 16), b = parseInt(hex.slice(5, 7), 16);
+        return `rgba(${r}, ${g}, ${b}, ${opacity})`;
+    }
+    function updateVisualState(id) {
+        const line = document.getElementById(`line-${id}`);
+        if(line) line.classList.toggle('selected-visual', line.querySelector('.select-box').checked);
+    }
+    function updateLineColorPreset(select, id) {
+        if(select.value !== "custom") select.parentElement.querySelector('.line-color-picker').value = select.value;
+        generateImage();
+    }
+    function updateLineColorManual(picker, id) {
+        picker.parentElement.querySelector('.line-color-preset').value = "custom";
+        generateImage();
+    }
+    function startDrag(e, id) {
+        e.preventDefault(); draggingLineId = id; dragStartX = e.clientX; dragStartY = e.clientY; initialPositions = {};
+        document.querySelectorAll('.line-item').forEach(li => { if (li.querySelector('.select-box').checked) initialPositions[li.id] = { x: parseInt(li.dataset.x), y: parseInt(li.dataset.y) }; });
+        document.addEventListener('mousemove', onDragMove); document.addEventListener('mouseup', onDragEnd);
+    }
+    function onDragMove(e) {
+        if (draggingLineId === null) return;
+        const dx = e.clientX - dragStartX, dy = e.clientY - dragStartY;
+        for (let id in initialPositions) {
+            const line = document.getElementById(id);
+            line.dataset.x = initialPositions[id].x + dx; line.dataset.y = initialPositions[id].y + dy;
+        }
+        generateImage();
+    }
+    function onDragEnd() { draggingLineId = null; document.removeEventListener('mousemove', onDragMove); document.removeEventListener('mouseup', onDragEnd); saveSettings(); }
+    
+    // محاذاة ورص الأسطر
+    function stackSelected() {
+        const sel = Array.from(document.querySelectorAll('.line-item')).filter(li => li.querySelector('.select-box').checked);
+        if (sel.length < 1) return;
+        let curY = parseInt(sel[0].dataset.y); const stX = parseInt(sel[0].dataset.x);
+        sel.forEach(li => {
+            const fs = parseInt(li.querySelector('.line-size').value);
+            const lns = li.querySelector('.line-input').value.split('\n').length;
+            li.dataset.x = stX; li.dataset.y = curY;
+            curY += ((fs + 8) * lns) - 1;
+        });
+        generateImage();
+    }
+    function alignLeftSelected() {
+        const sel = Array.from(document.querySelectorAll('.line-item')).filter(li => li.querySelector('.select-box').checked);
+        if (sel.length > 0) { const stX = sel[0].dataset.x; sel.forEach(li => li.dataset.x = stX); generateImage(); }
+    }
+
+    // إعدادات عامة
+    function applyGlobalSize() { document.querySelectorAll('.line-size').forEach(i => i.value = document.getElementById('globalFontSize').value); generateImage(); }
+    function applyGlobalFont() { document.querySelectorAll('.line-font').forEach(s => s.value = document.getElementById('fontFamily').value); generateImage(); }
+    function applyGlobalBgColor() { document.querySelectorAll('.line-bg-color').forEach(i => i.value = document.getElementById('globalBgColor').value); generateImage(); }
+    function applyGlobalOpacity() { document.querySelectorAll('.line-opacity').forEach(i => i.value = document.getElementById('bgOpacity').value); generateImage(); }
+    function resetAllRotation() { document.querySelectorAll('.line-rotate').forEach(i => i.value = 0); generateImage(); }
+    function toggleBold(btn) { btn.classList.toggle('active'); generateImage(); }
+    function removeLine(id) { document.getElementById(`line-${id}`).remove(); generateImage(); }
+    function resetRotation(id) { document.getElementById(`line-${id}`).querySelector('.line-rotate').value = 0; generateImage(); }
+    function toggleSelectAll() {
+        const boxes = document.querySelectorAll('.select-box'); const anyU = Array.from(boxes).some(b => !b.checked);
+        boxes.forEach(b => { b.checked = anyU; updateVisualState(b.closest('.line-item').id.split('-')[1]); });
     }
 
     function downloadImage() {
-        const link = document.createElement('a');
-        link.download = 'SAMP_v4.1_Chatlog.png';
-        link.href = canvas.toDataURL('image/png');
-        link.click();
+        const link = document.createElement('a'); link.download = 'SAMP_v4.1_Shadow.png';
+        link.href = canvas.toDataURL('image/png'); link.click();
     }
 
     function saveSettings() {
-        const settings = {
-            fontFamily: document.getElementById('fontFamily').value,
-            bgOpacity: document.getElementById('bgOpacity').value,
-            globalFontSize: document.getElementById('globalFontSize').value,
-            globalBgColor: document.getElementById('globalBgColor').value
-        };
+        const settings = { fontFamily: document.getElementById('fontFamily').value, globalFontSize: document.getElementById('globalFontSize').value };
         localStorage.setItem('sampSettingsV4_1', JSON.stringify(settings));
-    }
-
-    function loadSettings() {
-        const saved = localStorage.getItem('sampSettingsV4_1');
-        if (saved) {
-            const s = JSON.parse(saved);
-            document.getElementById('fontFamily').value = s.fontFamily || 'Tahoma';
-            document.getElementById('bgOpacity').value = s.bgOpacity;
-            document.getElementById('globalFontSize').value = s.globalFontSize || 18;
-            document.getElementById('globalBgColor').value = s.globalBgColor || "#000000";
-        }
     }
 
     bgImageInput.addEventListener('change', (e) => {
         const file = e.target.files[0];
         if (file) {
             const reader = new FileReader();
-            reader.onload = (re) => {
-                const img = new Image();
-                img.onload = () => { bgImage = img; generateImage(); };
-                img.src = re.target.result;
-            };
+            reader.onload = (re) => { const img = new Image(); img.onload = () => { bgImage = img; generateImage(); }; img.src = re.target.result; };
             reader.readAsDataURL(file);
         }
     });
 
     window.onload = () => {
-        loadSettings();
-        addLine("by genrousadam. (gadam1.)", "#ffffff", false, 80, 80);
-        addLine("* تحياتي.", "#3159ff", true, 80, 106);
-        setTimeout(stackSelected, 100);
-        // توليد الصورة مرة إضافية لضمان تحميل الخطوط
+        addLine("by eng.adam (gadam1) ", "#ffffff", false, 80, 80);
+        addLine("* regards.", "#3159ff", true, 80, 106);
         setTimeout(generateImage, 500);
     };
 </script>
