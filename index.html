@@ -2,148 +2,447 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>SAMP Chatlog Gen v4.1 - Smart Selection & Fonts</title>
-    <link href="https://fonts.googleapis.com/css2?family=Almarai&family=Cairo&family=Cinzel&family=Creepster&family=Montserrat&family=Oswald&family=Roboto&family=Tajawal&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SAMP Chatlog Generator — by genrousadam</title>
+    <link href="https://fonts.googleapis.com/css2?family=Almarai&family=Cairo:wght@400;700&family=Cinzel&family=Creepster&family=Montserrat&family=Oswald&family=Roboto&family=Tajawal&family=Orbitron:wght@700&family=Exo+2:wght@400;600&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Segoe UI', Tahoma, sans-serif; background-color: #1e1e2f; color: #fff; margin: 0; padding: 20px; display: flex; gap: 20px; }
-        .controls { flex: 1; background: #2a2a40; padding: 20px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.5); overflow-y: auto; max-height: 90vh; }
-        .preview-area { flex: 1.5; display: flex; flex-direction: column; align-items: center; position: relative; }
-        h2 { margin-top: 0; color: #ffb86c; font-size: 1.1rem; border-bottom: 1px solid #444; padding-bottom: 5px; }
-        .setting-group { margin-bottom: 15px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; background: #33334d; padding: 10px; border-radius: 8px; }
-        label { font-weight: bold; min-width: 80px; font-size: 0.85rem; }
-        input, select, button, textarea { padding: 8px; border-radius: 5px; border: 1px solid #444; background: #222; color: #fff; }
-        button { background: #50fa7b; color: #000; font-weight: bold; cursor: pointer; border: none; transition: 0.2s; padding: 5px 10px; }
-        button:hover { opacity: 0.8; }
-        .line-item { background: #1e1e2f; padding: 12px; margin-bottom: 10px; border-radius: 8px; border-right: 4px solid #ffb86c; transition: 0.2s; }
-        .line-item.selected-visual { background: #3d3d5c; border-right-color: #50fa7b; }
-        .line-controls { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 10px; }
-        .line-input { width: 100%; box-sizing: border-box; background: #252535; border: 1px solid #444; color: #fff; resize: vertical; min-height: 40px; }
-        #canvasWrapper { border: 2px dashed #6272a4; background: #000; position: relative; cursor: crosshair; }
+        :root {
+            --bg-deep:     #0b0c14;
+            --bg-panel:    #12131f;
+            --bg-card:     #1a1b2e;
+            --bg-item:     #1f2035;
+            --border:      #2a2b45;
+            --accent:      #f0c040;
+            --accent2:     #7c6fcd;
+            --green:       #3ddc84;
+            --red:         #ff5370;
+            --blue:        #4fc3f7;
+            --text:        #e0e2f0;
+            --muted:       #6b6d8a;
+            --selected-bg: #252647;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Exo 2', 'Cairo', sans-serif;
+            background-color: var(--bg-deep);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+
+        /* ===== WATERMARK BG ===== */
+        body::before {
+            content: "Made by genrousadam";
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-30deg);
+            font-size: clamp(3rem, 8vw, 7rem);
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
+            color: rgba(240, 192, 64, 0.04);
+            white-space: nowrap;
+            pointer-events: none;
+            z-index: 0;
+            letter-spacing: 0.05em;
+        }
+
+        body::after {
+            content: "";
+            position: fixed;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 60% 40% at 10% 20%, rgba(124,111,205,0.07) 0%, transparent 70%),
+                radial-gradient(ellipse 50% 50% at 90% 80%, rgba(240,192,64,0.05) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* ===== HEADER ===== */
+        header {
+            position: relative;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 28px;
+            background: linear-gradient(90deg, #12131f 0%, #1a1030 60%, #12131f 100%);
+            border-bottom: 1px solid var(--border);
+            box-shadow: 0 2px 24px rgba(0,0,0,0.5);
+        }
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .logo-icon {
+            width: 38px; height: 38px;
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 20px;
+        }
+        .logo-text {
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
+            font-size: 1.15rem;
+            letter-spacing: 0.08em;
+            color: var(--accent);
+        }
+        .logo-sub {
+            font-size: 0.65rem;
+            color: var(--muted);
+            letter-spacing: 0.12em;
+            margin-top: 1px;
+        }
+        .header-badge {
+            font-size: 0.72rem;
+            color: var(--muted);
+            letter-spacing: 0.05em;
+        }
+        .header-badge span {
+            color: var(--accent);
+            font-family: 'Orbitron', sans-serif;
+        }
+
+        /* ===== MAIN LAYOUT ===== */
+        .main-wrap {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            gap: 0;
+            flex: 1;
+            min-height: 0;
+        }
+
+        /* ===== SIDEBAR ===== */
+        .sidebar {
+            width: 380px;
+            min-width: 320px;
+            background: var(--bg-panel);
+            border-left: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            max-height: calc(100vh - 64px);
+        }
+
+        .sidebar::-webkit-scrollbar { width: 5px; }
+        .sidebar::-webkit-scrollbar-track { background: transparent; }
+        .sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+        .section {
+            padding: 16px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .section-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.65rem;
+            letter-spacing: 0.14em;
+            color: var(--accent);
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .section-title::after {
+            content: "";
+            flex: 1;
+            height: 1px;
+            background: linear-gradient(90deg, var(--border), transparent);
+        }
+
+        /* ===== FORM ELEMENTS ===== */
+        .row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
+        .row label { font-size: 0.78rem; color: var(--muted); min-width: 70px; }
+
+        input[type="number"], input[type="range"], select, textarea {
+            background: var(--bg-deep);
+            border: 1px solid var(--border);
+            color: var(--text);
+            border-radius: 6px;
+            padding: 6px 10px;
+            font-family: inherit;
+            font-size: 0.82rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        input[type="number"]:focus, select:focus, textarea:focus {
+            border-color: var(--accent2);
+        }
+        input[type="color"] {
+            background: transparent;
+            border: 1px solid var(--border);
+            border-radius: 5px;
+            cursor: pointer;
+            height: 30px;
+            padding: 1px;
+        }
+        input[type="checkbox"] {
+            width: 16px; height: 16px; accent-color: var(--accent);
+        }
+        input[type="file"] {
+            font-size: 0.78rem; color: var(--muted);
+            background: var(--bg-deep);
+            border: 1px dashed var(--border);
+            border-radius: 6px;
+            padding: 6px;
+            cursor: pointer;
+            width: 100%;
+        }
+        input[type="file"]:hover { border-color: var(--accent); }
+
+        select option { background: #1a1b2e; }
+
+        /* FAVORITE options highlight */
+        select option.fav {
+            color: var(--accent);
+            font-weight: 700;
+        }
+
+        /* ===== BUTTONS ===== */
+        .btn {
+            padding: 6px 14px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-family: 'Exo 2', sans-serif;
+            font-size: 0.78rem;
+            font-weight: 600;
+            transition: opacity 0.15s, transform 0.1s;
+            white-space: nowrap;
+        }
+        .btn:hover { opacity: 0.85; transform: translateY(-1px); }
+        .btn:active { transform: translateY(0); }
+        .btn-green  { background: var(--green);  color: #000; }
+        .btn-red    { background: var(--red);     color: #fff; }
+        .btn-accent { background: var(--accent);  color: #000; }
+        .btn-purple { background: var(--accent2); color: #fff; }
+        .btn-blue   { background: var(--blue);    color: #000; }
+        .btn-ghost  { background: var(--bg-item); color: var(--text); border: 1px solid var(--border); }
+        .btn-ghost:hover { border-color: var(--accent); }
+
+        .btn-full { width: 100%; padding: 10px; font-size: 0.9rem; margin-top: 6px; }
+
+        .tool-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 7px;
+        }
+
+        /* ===== LINE ITEMS ===== */
+        #linesContainer { padding: 0 16px; }
+
+        .line-item {
+            background: var(--bg-item);
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border: 1px solid var(--border);
+            border-right: 3px solid var(--accent2);
+            overflow: hidden;
+            transition: border-color 0.2s, background 0.2s;
+        }
+        .line-item.selected-visual {
+            background: var(--selected-bg);
+            border-right-color: var(--green);
+            border-color: rgba(61,220,132,0.3);
+        }
+
+        .line-top {
+            display: flex;
+            align-items: flex-start;
+            gap: 8px;
+            padding: 10px;
+        }
+
+        .line-input {
+            flex: 1;
+            background: var(--bg-deep);
+            border: 1px solid var(--border);
+            color: var(--text);
+            border-radius: 6px;
+            padding: 6px 8px;
+            font-size: 0.82rem;
+            resize: vertical;
+            min-height: 38px;
+            font-family: inherit;
+        }
+        .line-input:focus { border-color: var(--accent2); outline: none; }
+
+        .line-handle {
+            cursor: grab;
+            color: var(--accent);
+            font-size: 1.1rem;
+            padding: 6px 4px;
+            user-select: none;
+        }
+        .line-handle:active { cursor: grabbing; }
+
+        .order-btns { display: flex; flex-direction: column; gap: 2px; }
+        .order-btns button {
+            width: 22px; height: 20px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            color: var(--muted);
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 9px;
+            padding: 0;
+            line-height: 1;
+            transition: 0.15s;
+        }
+        .order-btns button:hover { color: var(--accent); border-color: var(--accent); }
+
+        .line-body {
+            padding: 0 10px 10px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        .field-block { display: flex; flex-direction: column; gap: 3px; }
+        .field-label { font-size: 0.68rem; color: var(--muted); letter-spacing: 0.04em; }
+        .field-block select, .field-block input[type="range"],
+        .field-block input[type="number"] { width: 100%; }
+
+        .color-row { display: flex; gap: 4px; align-items: center; }
+        .color-row select { flex: 1; }
+        .color-row input[type="color"] { width: 32px; height: 26px; flex-shrink: 0; padding: 1px; }
+
+        .line-actions { display: flex; gap: 5px; align-items: center; }
+
+        .bold-btn {
+            width: 28px; height: 28px;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 900;
+            font-size: 0.9rem;
+            cursor: pointer;
+            border: 1px solid var(--border);
+            background: var(--bg-deep);
+            border-radius: 5px;
+            color: var(--muted);
+            transition: 0.15s;
+            user-select: none;
+        }
+        .bold-btn.active { background: var(--accent); color: #000; border-color: var(--accent); }
+        .bold-btn:hover { border-color: var(--accent); }
+
+        /* ===== ADD LINE ===== */
+        .add-line-area {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        /* ===== DOWNLOAD ===== */
+        .download-area {
+            padding: 16px;
+        }
+
+        /* ===== PREVIEW ===== */
+        .preview-wrap {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            min-width: 0;
+        }
+
+        .preview-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 14px;
+        }
+        .preview-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.7rem;
+            letter-spacing: 0.12em;
+            color: var(--blue);
+            text-transform: uppercase;
+        }
+        .preview-hint {
+            font-size: 0.7rem;
+            color: var(--muted);
+        }
+        .preview-hint span { color: var(--accent); }
+
+        #canvasWrapper {
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            overflow: hidden;
+            background: #000;
+            cursor: crosshair;
+            position: relative;
+            display: inline-block;
+            box-shadow: 0 8px 40px rgba(0,0,0,0.7), 0 0 0 1px rgba(124,111,205,0.1);
+        }
         canvas { display: block; }
-        .bold-btn { width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; font-weight: bold; cursor: pointer; border: 1px solid #444; background: #333; border-radius: 5px; }
-        .bold-btn.active { background: #ffb86c; color: #000; }
-        .line-handle { cursor: move; color: #ffb86c; font-weight: bold; padding: 5px; background: #333; border-radius: 3px; }
-        .group-actions { margin-bottom: 15px; background: #383850; padding: 10px; border-radius: 8px; display: flex; flex-wrap: wrap; gap: 8px; }
-        .color-label { font-size: 10px; display: block; margin-bottom: 2px; color: #aaa; }
-        .font-select { width: 100%; }
+
+        /* ===== SCROLLBAR ===== */
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+        /* ===== FONT PRELOAD TRICK ===== */
+        .font-preload { position: absolute; opacity: 0; pointer-events: none; font-size: 1px; }
     </style>
 </head>
 <body>
 
-    <div style="position:absolute; opacity:0; pointer-events:none;">
-        <span style="font-family: 'Roboto'">.</span><span style="font-family: 'Oswald'">.</span>
-        <span style="font-family: 'Montserrat'">.</span><span style="font-family: 'Cairo'">.</span>
-        <span style="font-family: 'Tajawal'">.</span><span style="font-family: 'Almarai'">.</span>
-        <span style="font-family: 'Cinzel'">.</span><span style="font-family: 'Creepster'">.</span>
-    </div>
+<!-- Preload fonts -->
+<div class="font-preload">
+    <span style="font-family:'Roboto'">.</span><span style="font-family:'Oswald'">.</span>
+    <span style="font-family:'Montserrat'">.</span><span style="font-family:'Cairo'">.</span>
+    <span style="font-family:'Tajawal'">.</span><span style="font-family:'Almarai'">.</span>
+    <span style="font-family:'Cinzel'">.</span><span style="font-family:'Creepster'">.</span>
+    <span style="font-family:'Orbitron'">.</span><span style="font-family:'Exo 2'">.</span>
+</div>
 
-    <div class="controls">
-        <h2>الإعدادات العامة</h2>
-        <div class="setting-group">
-            <label>صورة اللعبة:</label>
+<!-- HEADER -->
+<header>
+    <div class="logo">
+        <div class="logo-icon">🎮</div>
+        <div>
+            <div class="logo-text">SAMP CHATLOG</div>
+            <div class="logo-sub">GENERATOR v5.0</div>
+        </div>
+    </div>
+    <div class="header-badge">Made by <span>genrousadam</span></div>
+</header>
+
+<!-- MAIN -->
+<div class="main-wrap">
+
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+
+        <!-- Background Image -->
+        <div class="section">
+            <div class="section-title">🖼 صورة الخلفية</div>
             <input type="file" id="bgImageInput" accept="image/*">
         </div>
-        
-        <div class="setting-group" style="background: #44475a;">
-            <label>ظل النص (Shadow):</label>
-            <input type="checkbox" id="globalShadowToggle" checked onchange="generateImage()" style="width: 20px; height: 20px;">
-            <span style="font-size: 0.8rem;">تفعيل الظل لجميع الأسطر</span>
-        </div>
 
-        <div class="setting-group">
-            <label>الخط العام:</label>
-            <input type="number" id="globalFontSize" value="18" style="width: 50px;" oninput="applyGlobalSize()">
-            <label>نوعه:</label>
-            <select id="fontFamily" onchange="applyGlobalFont(); saveSettings();">
-                <option value="Tahoma">Tahoma</option>
-                <option value="Arial">Arial</option>
-                <option value="Courier New">Courier New</option>
-                <option value="Verdana">Verdana</option>
-                <option value="Trebuchet MS">Trebuchet MS</option>
-                <option value="Georgia">Georgia</option>
-                <option value="Impact">Impact</option>
-                <option value="'Comic Sans MS'">Comic Sans</option>
-                <option value="'Times New Roman'">Times New Roman</option>
-                <option value="'Roboto', sans-serif">Roboto</option>
-                <option value="'Oswald', sans-serif">Oswald</option>
-                <option value="'Montserrat', sans-serif">Montserrat</option>
-                <option value="'Cairo', sans-serif">Cairo (عربي)</option>
-                <option value="'Tajawal', sans-serif">Tajawal (عربي)</option>
-                <option value="'Almarai', sans-serif">Almarai (عربي)</option>
-                <option value="'Cinzel', serif">Cinzel</option>
-                <option value="'Creepster', cursive" style="color:#ff5555; font-weight:bold;">Creepster (رعب ودماء)</option>
-            </select>
-        </div>
-        <div class="setting-group">
-            <label>لون الخلفية:</label>
-            <input type="color" id="globalBgColor" value="#000000" oninput="applyGlobalBgColor()">
-            <label>الشفافية:</label>
-            <input type="range" id="bgOpacity" min="0" max="1" step="0.1" value="0.7" oninput="applyGlobalOpacity()">
-        </div>
+        <!-- Global Settings -->
+        <div class="section">
+            <div class="section-title">⚙ إعدادات عامة</div>
 
-        <div class="group-actions">
-            <button onclick="stackSelected()" style="background: #bd93f9;">رصّ الأسطر عمودياً</button>
-            <button onclick="alignLeftSelected()" style="background: #8be9fd; color:#000;">محاذاة لليسار</button>
-            <button onclick="resetAllRotation()" style="background: #ffb86c; color:#000;">ضبط ميلان الجميع</button>
-            <button onclick="toggleSelectAll()" style="background: #6272a4;">تحديد الكل</button>
-        </div>
-
-        <h2>الأسطر</h2>
-        <div id="linesContainer"></div>
-        <button onclick="addLine()" style="width: 100%; margin-top: 10px;">+ سطر جديد</button>
-        <button onclick="downloadImage()" style="width: 100%; padding: 15px; margin-top: 20px; font-size: 1.1rem; background: #ff79c6;">تحميل الصورة النهائية</button>
-    </div>
-
-    <div class="preview-area">
-        <h2 style="color: #8be9fd;">المعاينة (اسحب الماوس للتحديد | ☰ للتحريك)</h2>
-        <div id="canvasWrapper">
-            <canvas id="chatCanvas"></canvas>
-        </div>
-    </div>
-
-<script>
-    const canvas = document.getElementById('chatCanvas');
-    const ctx = canvas.getContext('2d');
-    const linesContainer = document.getElementById('linesContainer');
-    const bgImageInput = document.getElementById('bgImageInput');
-    
-    let lineCount = 0;
-    let bgImage = null;
-    let draggingLineId = null;
-    let dragStartX, dragStartY;
-    let initialPositions = {};
-
-    let isSelecting = false;
-    let selectStartX, selectStartY;
-    let selectEndX, selectEndY;
-
-    function addLine(text = "", color = "#ffffff", isBold = true, x = 60, y = 60) {
-        const id = lineCount++;
-        const div = document.createElement('div');
-        div.className = 'line-item';
-        div.id = `line-${id}`;
-        div.dataset.x = x;
-        div.dataset.y = y;
-        
-        const currentGlobalOpacity = document.getElementById('bgOpacity').value;
-
-        div.innerHTML = `
-            <div style="display: flex; align-items: flex-start; gap: 10px;">
-                <input type="checkbox" class="select-box" checked style="margin-top:10px" onchange="updateVisualState(${id})">
-                <textarea class="line-input" oninput="generateImage()">${text}</textarea>
-                <div style="display:flex; flex-direction:column; gap:2px;">
-                    <button onclick="moveUp(${id})" style="padding:2px; font-size:10px; background:#444">🔼</button>
-                    <button onclick="moveDown(${id})" style="padding:2px; font-size:10px; background:#444">🔽</button>
-                </div>
-                <span class="line-handle" onmousedown="startDrag(event, ${id})">☰</span>
-            </div>
-            <div class="line-controls">
-                <div>
-                    <span class="color-label">الخط الخاص بالسطر</span>
-                    <select class="line-font font-select" onchange="generateImage()">
-                        <option value="Tahoma">Tahoma</option>
-                        <option value="Arial">Arial</option>
-                        <option value="Courier New">Courier New</option>
+            <div class="row">
+                <label>نوع الخط:</label>
+                <select id="fontFamily" onchange="applyGlobalFont(); saveSettings();" style="flex:1">
+                    <optgroup label="⭐ المفضلة">
+                        <option value="Tahoma" class="fav">⭐ Tahoma</option>
+                        <option value="'Cairo', sans-serif" class="fav">⭐ Cairo (عربي)</option>
+                        <option value="'Tajawal', sans-serif" class="fav">⭐ Tajawal (عربي)</option>
+                        <option value="'Almarai', sans-serif" class="fav">⭐ Almarai (عربي)</option>
+                        <option value="Arial" class="fav">⭐ Arial</option>
+                    </optgroup>
+                    <optgroup label="خطوط إنجليزية">
                         <option value="Verdana">Verdana</option>
                         <option value="Trebuchet MS">Trebuchet MS</option>
                         <option value="Georgia">Georgia</option>
@@ -153,50 +452,215 @@
                         <option value="'Roboto', sans-serif">Roboto</option>
                         <option value="'Oswald', sans-serif">Oswald</option>
                         <option value="'Montserrat', sans-serif">Montserrat</option>
-                        <option value="'Cairo', sans-serif">Cairo</option>
-                        <option value="'Tajawal', sans-serif">Tajawal</option>
-                        <option value="'Almarai', sans-serif">Almarai</option>
+                        <option value="'Courier New', monospace">Courier New</option>
                         <option value="'Cinzel', serif">Cinzel</option>
-                        <option value="'Creepster', cursive">Creepster (رعب)</option>
-                    </select>
+                        <option value="'Orbitron', sans-serif">Orbitron</option>
+                    </optgroup>
+                    <optgroup label="خطوط خاصة">
+                        <option value="'Creepster', cursive">🩸 Creepster (رعب)</option>
+                    </optgroup>
+                </select>
+            </div>
+
+            <div class="row">
+                <label>حجم الخط:</label>
+                <input type="number" id="globalFontSize" value="18" style="width:60px" oninput="applyGlobalSize()">
+                <input type="range" id="globalFontSizeSlider" min="8" max="60" value="18" style="flex:1" oninput="document.getElementById('globalFontSize').value=this.value; applyGlobalSize()">
+            </div>
+
+            <div class="row">
+                <label>لون الخلفية:</label>
+                <input type="color" id="globalBgColor" value="#000000" oninput="applyGlobalBgColor()">
+                <label style="min-width:50px">الشفافية:</label>
+                <input type="range" id="bgOpacity" min="0" max="1" step="0.05" value="0.7" oninput="applyGlobalOpacity()" style="flex:1">
+            </div>
+
+            <div class="row">
+                <label>ظل النص:</label>
+                <input type="checkbox" id="globalShadowToggle" checked onchange="generateImage()">
+                <span style="font-size:0.78rem; color:var(--muted)">تفعيل لجميع الأسطر</span>
+            </div>
+        </div>
+
+        <!-- Quick Tools -->
+        <div class="section">
+            <div class="section-title">🛠 أدوات سريعة</div>
+            <div class="tool-grid">
+                <button class="btn btn-purple" onclick="stackSelected()">📐 رصّ عمودياً</button>
+                <button class="btn btn-blue" onclick="alignLeftSelected()">⬅ محاذاة يسار</button>
+                <button class="btn btn-ghost" onclick="resetAllRotation()">↺ ضبط الميلان</button>
+                <button class="btn btn-ghost" onclick="toggleSelectAll()">☑ تحديد الكل</button>
+            </div>
+        </div>
+
+        <!-- Lines -->
+        <div class="section" style="padding-bottom:6px">
+            <div class="section-title">💬 الأسطر</div>
+        </div>
+        <div id="linesContainer"></div>
+        <div class="add-line-area">
+            <button class="btn btn-green btn-full" onclick="addLine()">＋ سطر جديد</button>
+        </div>
+
+        <!-- Download -->
+        <div class="download-area">
+            <button class="btn btn-accent btn-full" style="font-size:1rem; padding:12px;" onclick="downloadImage()">⬇ تحميل الصورة النهائية</button>
+        </div>
+
+    </div>
+    <!-- /SIDEBAR -->
+
+    <!-- PREVIEW -->
+    <div class="preview-wrap">
+        <div class="preview-header">
+            <div class="preview-title">🎯 منطقة المعاينة</div>
+            <div class="preview-hint">اسحب الماوس للتحديد • <span>☰</span> لتحريك السطر</div>
+        </div>
+        <div id="canvasWrapper">
+            <canvas id="chatCanvas"></canvas>
+        </div>
+    </div>
+    <!-- /PREVIEW -->
+
+</div>
+<!-- /MAIN -->
+
+<script>
+    const canvas = document.getElementById('chatCanvas');
+    const ctx = canvas.getContext('2d');
+    const linesContainer = document.getElementById('linesContainer');
+    const bgImageInput = document.getElementById('bgImageInput');
+
+    let lineCount = 0;
+    let bgImage = null;
+    let draggingLineId = null;
+    let dragStartX, dragStartY;
+    let initialPositions = {};
+    let isSelecting = false;
+    let selectStartX, selectStartY, selectEndX, selectEndY;
+
+    // ===== FONT OPTIONS (shared, favorites highlighted) =====
+    const FONT_OPTIONS_HTML = `
+        <optgroup label="⭐ المفضلة">
+            <option value="Tahoma" class="fav" style="color:#f0c040;font-weight:700">⭐ Tahoma</option>
+            <option value="'Cairo', sans-serif" class="fav" style="color:#f0c040;font-weight:700">⭐ Cairo (عربي)</option>
+            <option value="'Tajawal', sans-serif" class="fav" style="color:#f0c040;font-weight:700">⭐ Tajawal (عربي)</option>
+            <option value="'Almarai', sans-serif" class="fav" style="color:#f0c040;font-weight:700">⭐ Almarai (عربي)</option>
+            <option value="Arial" class="fav" style="color:#f0c040;font-weight:700">⭐ Arial</option>
+        </optgroup>
+        <optgroup label="خطوط إنجليزية">
+            <option value="Verdana">Verdana</option>
+            <option value="Trebuchet MS">Trebuchet MS</option>
+            <option value="Georgia">Georgia</option>
+            <option value="Impact">Impact</option>
+            <option value="'Comic Sans MS'">Comic Sans</option>
+            <option value="'Times New Roman'">Times New Roman</option>
+            <option value="'Roboto', sans-serif">Roboto</option>
+            <option value="'Oswald', sans-serif">Oswald</option>
+            <option value="'Montserrat', sans-serif">Montserrat</option>
+            <option value="'Courier New', monospace">Courier New</option>
+            <option value="'Cinzel', serif">Cinzel</option>
+            <option value="'Orbitron', sans-serif">Orbitron</option>
+        </optgroup>
+        <optgroup label="خطوط خاصة">
+            <option value="'Creepster', cursive">🩸 Creepster (رعب)</option>
+        </optgroup>
+    `;
+
+    // ===== ADD LINE =====
+    function addLine(text = "", color = "#ffffff", isBold = true, x = 60, y = 60) {
+        const id = lineCount++;
+        const div = document.createElement('div');
+        div.className = 'line-item';
+        div.id = `line-${id}`;
+        div.dataset.x = x;
+        div.dataset.y = y;
+
+        const curOpacity = document.getElementById('bgOpacity').value;
+        const curSize = document.getElementById('globalFontSize').value;
+        const curFont = document.getElementById('fontFamily').value;
+        const curBgColor = document.getElementById('globalBgColor').value;
+
+        div.innerHTML = `
+            <div class="line-top">
+                <input type="checkbox" class="select-box" checked onchange="updateVisualState(${id})" style="margin-top:8px; flex-shrink:0">
+                <textarea class="line-input" oninput="generateImage()">${text}</textarea>
+                <div class="order-btns">
+                    <button onclick="moveUp(${id})" title="للأعلى">▲</button>
+                    <button onclick="moveDown(${id})" title="للأسفل">▼</button>
                 </div>
-                <div>
-                    <span class="color-label">اختصارات الألوان</span>
-                    <div style="display:flex; gap:3px">
-                        <select class="line-color-preset" onchange="updateLineColorPreset(this, ${id})" style="width: 70%;">
-                            <option value="#ffffff">أبيض</option>
-                            <option value="#C2A2DA">بنفسجي</option>
-                            <option value="#ffff00">أصفر</option>
-                            <option value="#3159ff">اللاسلكي</option>
-                            <option value="custom">مخصص</option>
+                <span class="line-handle" onmousedown="startDrag(event, ${id})" title="اسحب لتحريك السطر">☰</span>
+            </div>
+            <div class="line-body">
+                <div class="field-block">
+                    <span class="field-label">نوع الخط</span>
+                    <select class="line-font" onchange="generateImage()">${FONT_OPTIONS_HTML}</select>
+                </div>
+                <div class="field-block">
+                    <span class="field-label">اللون</span>
+                    <div class="color-row">
+                        <select class="line-color-preset" onchange="updateLineColorPreset(this, ${id})">
+                            <option value="#ffffff">⬜ أبيض</option>
+                            <option value="#C2A2DA">🟣 بنفسجي</option>
+                            <option value="#ffff00">🟡 أصفر</option>
+                            <option value="#3159ff">🔵 لاسلكي</option>
+                            <option value="#ff5370">🔴 أحمر</option>
+                            <option value="#50fa7b">🟢 أخضر</option>
+                            <option value="#f0c040">⭐ ذهبي</option>
+                            <option value="custom">🎨 مخصص</option>
                         </select>
-                        <input type="color" class="line-color-picker" value="${color}" style="width: 30%; padding:0;" oninput="updateLineColorManual(this, ${id})">
+                        <input type="color" class="line-color-picker" value="${color}" oninput="updateLineColorManual(this, ${id})">
                     </div>
                 </div>
-                <div><span class="color-label">خلفية</span><select class="line-bg-type" onchange="generateImage()" style="width:100%;"><option value="fit">Fit</option><option value="fill">Fill</option><option value="none">None</option></select></div>
-                <div><span class="color-label">لونها</span><input type="color" class="line-bg-color" value="${document.getElementById('globalBgColor').value}" oninput="generateImage()" style="width:100%;"></div>
-                <div><span class="color-label">حجم الخط</span><input type="range" class="line-size" min="10" max="50" value="${document.getElementById('globalFontSize').value}" oninput="generateImage()" style="width:100%;"></div>
-                <div><span class="color-label">الإمالة</span><input type="range" class="line-rotate" min="-180" max="180" value="0" oninput="generateImage()" style="width:100%;"></div>
-                <div><span class="color-label">شفافية الخلفية</span><input type="range" class="line-opacity" min="0" max="1" step="0.1" value="${currentGlobalOpacity}" oninput="generateImage()" style="width:100%;"></div>
-                <div style="display:flex; gap:5px; margin-top:12px">
-                    <button onclick="resetRotation(${id})" title="ضبط الميلان" style="background:#6272a4; font-size:10px">↺</button>
-                    <div class="bold-btn ${isBold ? 'active' : ''}" onclick="toggleBold(this)">B</div>
-                    <button onclick="removeLine(${id})" style="background:#ff5555">X</button>
+                <div class="field-block">
+                    <span class="field-label">نوع الخلفية</span>
+                    <select class="line-bg-type" onchange="generateImage()">
+                        <option value="fit">Fit (بحجم النص)</option>
+                        <option value="fill">Fill (عرض كامل)</option>
+                        <option value="none">بلا خلفية</option>
+                    </select>
+                </div>
+                <div class="field-block">
+                    <span class="field-label">لون الخلفية</span>
+                    <input type="color" class="line-bg-color" value="${curBgColor}" oninput="generateImage()" style="width:100%; height:28px;">
+                </div>
+                <div class="field-block">
+                    <span class="field-label">حجم الخط</span>
+                    <input type="range" class="line-size" min="8" max="60" value="${curSize}" oninput="generateImage()">
+                </div>
+                <div class="field-block">
+                    <span class="field-label">الإمالة (°)</span>
+                    <input type="range" class="line-rotate" min="-180" max="180" value="0" oninput="generateImage()">
+                </div>
+                <div class="field-block">
+                    <span class="field-label">شفافية الخلفية</span>
+                    <input type="range" class="line-opacity" min="0" max="1" step="0.05" value="${curOpacity}" oninput="generateImage()">
+                </div>
+                <div class="field-block">
+                    <span class="field-label">إجراءات</span>
+                    <div class="line-actions">
+                        <div class="bold-btn ${isBold ? 'active' : ''}" onclick="toggleBold(this)" title="Bold">B</div>
+                        <button class="btn btn-ghost" onclick="resetRotation(${id})" title="ضبط الميلان" style="padding:4px 8px; font-size:11px;">↺</button>
+                        <button class="btn btn-red" onclick="removeLine(${id})" style="padding:4px 8px; font-size:11px;">✕</button>
+                    </div>
                 </div>
             </div>
         `;
+
         linesContainer.appendChild(div);
-        div.querySelector('.line-font').value = document.getElementById('fontFamily').value;
+        div.querySelector('.line-font').value = curFont;
         updateVisualState(id);
         generateImage();
     }
 
-    // --- أنظمة التحديد والسحب الأصلية ---
+    // ===== CANVAS SELECTION =====
     canvas.addEventListener('mousedown', (e) => {
         const rect = canvas.getBoundingClientRect();
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
         isSelecting = true;
-        selectStartX = e.clientX - rect.left;
-        selectStartY = e.clientY - rect.top;
+        selectStartX = (e.clientX - rect.left) * scaleX;
+        selectStartY = (e.clientY - rect.top) * scaleY;
         selectEndX = selectStartX; selectEndY = selectStartY;
         document.querySelectorAll('.line-item').forEach(line => {
             line.querySelector('.select-box').checked = false;
@@ -207,13 +671,17 @@
     window.addEventListener('mousemove', (e) => {
         if (!isSelecting) return;
         const rect = canvas.getBoundingClientRect();
-        selectEndX = e.clientX - rect.left;
-        selectEndY = e.clientY - rect.top;
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
+        selectEndX = (e.clientX - rect.left) * scaleX;
+        selectEndY = (e.clientY - rect.top) * scaleY;
         checkCollision();
         generateImage();
     });
 
-    window.addEventListener('mouseup', () => { if (isSelecting) { isSelecting = false; generateImage(); } });
+    window.addEventListener('mouseup', () => {
+        if (isSelecting) { isSelecting = false; generateImage(); }
+    });
 
     function checkCollision() {
         const x1 = Math.min(selectStartX, selectEndX), y1 = Math.min(selectStartY, selectEndY);
@@ -230,13 +698,14 @@
         });
     }
 
+    // ===== GENERATE IMAGE =====
     function generateImage() {
         if (bgImage) {
             canvas.width = bgImage.width; canvas.height = bgImage.height;
             ctx.drawImage(bgImage, 0, 0);
         } else {
             canvas.width = 800; canvas.height = 450;
-            ctx.fillStyle = "#111"; ctx.fillRect(0,0,800,450);
+            ctx.fillStyle = "#111"; ctx.fillRect(0, 0, 800, 450);
         }
         ctx.direction = "ltr"; ctx.textAlign = "left"; ctx.textBaseline = "top";
 
@@ -267,18 +736,15 @@
                 const textWidth = ctx.measureText(txtLine).width;
                 const ly = index * singleLineH;
 
-                // 1. رسم الخلفية (مع تعطيل الظل لمنع تضارب الصناديق)
                 if (bgType !== "none") {
                     ctx.save();
-                    ctx.shadowColor = "transparent"; // تعطيل الظل للخلفية
-                    ctx.shadowBlur = 0;
+                    ctx.shadowColor = "transparent"; ctx.shadowBlur = 0;
                     ctx.fillStyle = hexToRgba(bgColorHex, lineOpacity);
                     if (bgType === "fit") ctx.fillRect(-4, ly - 4, textWidth + 8, singleLineH);
                     else if (bgType === "fill") ctx.fillRect(-x, ly - 4, canvas.width, singleLineH);
                     ctx.restore();
                 }
 
-                // 2. إعداد الظل للنص فقط إذا كان الخيار العام مفعلاً
                 if (globalShadow) {
                     ctx.shadowColor = "rgba(0,0,0,1)";
                     ctx.shadowBlur = 2;
@@ -288,9 +754,10 @@
                     ctx.shadowColor = "transparent";
                 }
 
-                // 3. رسم النص
-                ctx.strokeStyle = "black"; ctx.lineWidth = 2.5; ctx.strokeText(txtLine, 0, ly);
-                ctx.fillStyle = color; ctx.fillText(txtLine, 0, ly);
+                ctx.strokeStyle = "black"; ctx.lineWidth = 2.5;
+                ctx.strokeText(txtLine, 0, ly);
+                ctx.fillStyle = color;
+                ctx.fillText(txtLine, 0, ly);
             });
             ctx.restore();
         });
@@ -298,50 +765,81 @@
         if (isSelecting) {
             ctx.save();
             ctx.shadowColor = "transparent";
-            ctx.strokeStyle = "#50fa7b"; ctx.setLineDash([5, 5]);
+            ctx.strokeStyle = "#3ddc84"; ctx.lineWidth = 1.5;
+            ctx.setLineDash([5, 5]);
             ctx.strokeRect(selectStartX, selectStartY, selectEndX - selectStartX, selectEndY - selectStartY);
             ctx.restore();
         }
     }
 
-    // --- الوظائف المساعدة ---
+    // ===== HELPERS =====
     function hexToRgba(hex, opacity) {
-        let r = parseInt(hex.slice(1, 3), 16), g = parseInt(hex.slice(3, 5), 16), b = parseInt(hex.slice(5, 7), 16);
-        return `rgba(${r}, ${g}, ${b}, ${opacity})`;
+        let r = parseInt(hex.slice(1,3),16), g = parseInt(hex.slice(3,5),16), b = parseInt(hex.slice(5,7),16);
+        return `rgba(${r},${g},${b},${opacity})`;
     }
+
     function updateVisualState(id) {
         const line = document.getElementById(`line-${id}`);
-        if(line) line.classList.toggle('selected-visual', line.querySelector('.select-box').checked);
+        if (line) line.classList.toggle('selected-visual', line.querySelector('.select-box').checked);
     }
+
     function updateLineColorPreset(select, id) {
-        if(select.value !== "custom") select.parentElement.querySelector('.line-color-picker').value = select.value;
+        if (select.value !== "custom") select.parentElement.querySelector('.line-color-picker').value = select.value;
         generateImage();
     }
+
     function updateLineColorManual(picker, id) {
         picker.parentElement.querySelector('.line-color-preset').value = "custom";
         generateImage();
     }
+
+    // ===== DRAG =====
     function startDrag(e, id) {
-        e.preventDefault(); draggingLineId = id; dragStartX = e.clientX; dragStartY = e.clientY; initialPositions = {};
-        document.querySelectorAll('.line-item').forEach(li => { if (li.querySelector('.select-box').checked) initialPositions[li.id] = { x: parseInt(li.dataset.x), y: parseInt(li.dataset.y) }; });
-        document.addEventListener('mousemove', onDragMove); document.addEventListener('mouseup', onDragEnd);
+        e.preventDefault();
+        draggingLineId = id; dragStartX = e.clientX; dragStartY = e.clientY; initialPositions = {};
+        document.querySelectorAll('.line-item').forEach(li => {
+            if (li.querySelector('.select-box').checked)
+                initialPositions[li.id] = { x: parseInt(li.dataset.x), y: parseInt(li.dataset.y) };
+        });
+        document.addEventListener('mousemove', onDragMove);
+        document.addEventListener('mouseup', onDragEnd);
     }
+
     function onDragMove(e) {
         if (draggingLineId === null) return;
         const dx = e.clientX - dragStartX, dy = e.clientY - dragStartY;
         for (let id in initialPositions) {
             const line = document.getElementById(id);
-            line.dataset.x = initialPositions[id].x + dx; line.dataset.y = initialPositions[id].y + dy;
+            line.dataset.x = initialPositions[id].x + dx;
+            line.dataset.y = initialPositions[id].y + dy;
         }
         generateImage();
     }
-    function onDragEnd() { draggingLineId = null; document.removeEventListener('mousemove', onDragMove); document.removeEventListener('mouseup', onDragEnd); saveSettings(); }
-    
-    // محاذاة ورص الأسطر
+
+    function onDragEnd() {
+        draggingLineId = null;
+        document.removeEventListener('mousemove', onDragMove);
+        document.removeEventListener('mouseup', onDragEnd);
+        saveSettings();
+    }
+
+    // ===== REORDER =====
+    function moveUp(id) {
+        const el = document.getElementById(`line-${id}`);
+        if (el.previousElementSibling) { el.parentNode.insertBefore(el, el.previousElementSibling); generateImage(); }
+    }
+
+    function moveDown(id) {
+        const el = document.getElementById(`line-${id}`);
+        if (el.nextElementSibling) { el.parentNode.insertBefore(el.nextElementSibling, el); generateImage(); }
+    }
+
+    // ===== ALIGN / STACK =====
     function stackSelected() {
         const sel = Array.from(document.querySelectorAll('.line-item')).filter(li => li.querySelector('.select-box').checked);
         if (sel.length < 1) return;
-        let curY = parseInt(sel[0].dataset.y); const stX = parseInt(sel[0].dataset.x);
+        let curY = parseInt(sel[0].dataset.y);
+        const stX = parseInt(sel[0].dataset.x);
         sel.forEach(li => {
             const fs = parseInt(li.querySelector('.line-size').value);
             const lns = li.querySelector('.line-input').value.split('\n').length;
@@ -350,46 +848,78 @@
         });
         generateImage();
     }
+
     function alignLeftSelected() {
         const sel = Array.from(document.querySelectorAll('.line-item')).filter(li => li.querySelector('.select-box').checked);
         if (sel.length > 0) { const stX = sel[0].dataset.x; sel.forEach(li => li.dataset.x = stX); generateImage(); }
     }
 
-    // إعدادات عامة
-    function applyGlobalSize() { document.querySelectorAll('.line-size').forEach(i => i.value = document.getElementById('globalFontSize').value); generateImage(); }
-    function applyGlobalFont() { document.querySelectorAll('.line-font').forEach(s => s.value = document.getElementById('fontFamily').value); generateImage(); }
-    function applyGlobalBgColor() { document.querySelectorAll('.line-bg-color').forEach(i => i.value = document.getElementById('globalBgColor').value); generateImage(); }
-    function applyGlobalOpacity() { document.querySelectorAll('.line-opacity').forEach(i => i.value = document.getElementById('bgOpacity').value); generateImage(); }
+    // ===== GLOBAL CONTROLS =====
+    function applyGlobalSize() {
+        const v = document.getElementById('globalFontSize').value;
+        document.getElementById('globalFontSizeSlider').value = v;
+        document.querySelectorAll('.line-size').forEach(i => i.value = v);
+        generateImage();
+    }
+
+    function applyGlobalFont() {
+        document.querySelectorAll('.line-font').forEach(s => s.value = document.getElementById('fontFamily').value);
+        generateImage();
+    }
+
+    function applyGlobalBgColor() {
+        document.querySelectorAll('.line-bg-color').forEach(i => i.value = document.getElementById('globalBgColor').value);
+        generateImage();
+    }
+
+    function applyGlobalOpacity() {
+        document.querySelectorAll('.line-opacity').forEach(i => i.value = document.getElementById('bgOpacity').value);
+        generateImage();
+    }
+
     function resetAllRotation() { document.querySelectorAll('.line-rotate').forEach(i => i.value = 0); generateImage(); }
     function toggleBold(btn) { btn.classList.toggle('active'); generateImage(); }
     function removeLine(id) { document.getElementById(`line-${id}`).remove(); generateImage(); }
     function resetRotation(id) { document.getElementById(`line-${id}`).querySelector('.line-rotate').value = 0; generateImage(); }
+
     function toggleSelectAll() {
-        const boxes = document.querySelectorAll('.select-box'); const anyU = Array.from(boxes).some(b => !b.checked);
+        const boxes = document.querySelectorAll('.select-box');
+        const anyU = Array.from(boxes).some(b => !b.checked);
         boxes.forEach(b => { b.checked = anyU; updateVisualState(b.closest('.line-item').id.split('-')[1]); });
     }
 
     function downloadImage() {
-        const link = document.createElement('a'); link.download = 'SAMP_v4.1_Shadow.png';
-        link.href = canvas.toDataURL('image/png'); link.click();
+        const link = document.createElement('a');
+        link.download = 'SAMP_chatlog.png';
+        link.href = canvas.toDataURL('image/png');
+        link.click();
     }
 
     function saveSettings() {
-        const settings = { fontFamily: document.getElementById('fontFamily').value, globalFontSize: document.getElementById('globalFontSize').value };
-        localStorage.setItem('sampSettingsV4_1', JSON.stringify(settings));
+        const settings = {
+            fontFamily: document.getElementById('fontFamily').value,
+            globalFontSize: document.getElementById('globalFontSize').value
+        };
+        localStorage.setItem('sampSettings_v5', JSON.stringify(settings));
     }
 
+    // ===== BG IMAGE =====
     bgImageInput.addEventListener('change', (e) => {
         const file = e.target.files[0];
         if (file) {
             const reader = new FileReader();
-            reader.onload = (re) => { const img = new Image(); img.onload = () => { bgImage = img; generateImage(); }; img.src = re.target.result; };
+            reader.onload = (re) => {
+                const img = new Image();
+                img.onload = () => { bgImage = img; generateImage(); };
+                img.src = re.target.result;
+            };
             reader.readAsDataURL(file);
         }
     });
 
+    // ===== INIT =====
     window.onload = () => {
-        addLine("by eng.adam (gadam1) ", "#ffffff", false, 80, 80);
+        addLine("by genrousadam", "#f0c040", true, 80, 80);
         addLine("* regards.", "#3159ff", true, 80, 106);
         setTimeout(generateImage, 500);
     };
